@@ -17,67 +17,85 @@ public struct ScannedEntity
 
 namespace LC_MotionTracker.Patches
 {
-    [HarmonyPatch(typeof(WalkieTalkie))]
+    [HarmonyPatch(typeof(PlayerControllerB))]
     internal class MotionTracker
     {
         private static ManualLogSource logger = null;
 
         private static List<ScannedEntity> scannedEntities = new();
 
-        public static void InitLogger()
+        private static GameObject MotionTrackerLED;
+        private static GameObject SpawnedMotionTracker;
+
+        private static void InitLogger()
         {
-            if (logger == null)
+            if (logger != null)
             {
-                logger = new ManualLogSource("LC_MotionTracker_Log");
-                BepInEx.Logging.Logger.Sources.Add(logger);
+                return;
             }
+
+            MotionTrackerLED = LC_API.BundleAPI.BundleLoader.GetLoadedAsset<GameObject>("assets/motion tracker/prefabs/motiontrackerled.prefab");
+
+            logger = new ManualLogSource("LC_MotionTracker_Log");
+            Logger.Sources.Add(logger);
         }
 
+        [HarmonyPatch(typeof(PlayerControllerB), "Jump_performed")]
+        [HarmonyPostfix]
+        public static void PostJump(PlayerControllerB __instance)
+        {
+            InitLogger();
+            logger.LogInfo("Spawning motion tracker");
+
+            SpawnedMotionTracker = UnityEngine.Object.Instantiate(MotionTrackerLED);
+            SpawnedMotionTracker.transform.position = __instance.transform.position;
+            SpawnedMotionTracker.AddComponent<MotionTrackerScript>();
+            SpawnedMotionTracker.transform.localScale = new Vector3(100, 100, 100);
+        }
 
         [HarmonyPatch(typeof(PlayerControllerB), "Update")]
         [HarmonyPostfix]
         public static void UpdateStaminaPostfix(PlayerControllerB __instance)
         {
-            if (((NetworkBehaviour)__instance).IsOwner && __instance.isPlayerControlled)
+            return;
+            if (!((NetworkBehaviour)__instance).IsOwner || !__instance.isPlayerControlled)
             {
-                InitLogger();
-                var lastScannedEntities = new List<ScannedEntity>(scannedEntities);
-                scannedEntities.Clear();
-
-                Vector3 playerPos = __instance.transform.position;
-
-                var colliders = Physics.OverlapSphere(playerPos, 100, layerMask: 8 | 524288); // Player | Enemies
-
-                foreach (var collider in colliders)
-                {
-                    var entity = new ScannedEntity { collider = collider, position = collider.transform.position  };
-
-                    foreach (var lastEntity in lastScannedEntities)
-                    {
-                        if (lastEntity.collider == collider)
-                        {
-                            entity.speed = (collider.transform.position - lastEntity.position).magnitude;
-                        }
-                    }
-
-                    scannedEntities.Add(entity);
-                }
-
-                int i = 0;
-                foreach(var entity in scannedEntities)
-                {
-                    if (entity.speed > 0.06)
-                    {
-                        logger.LogInfo($"Moving entity: {i}/{scannedEntities.Count}. Speed: {entity.speed}. {entity.collider.gameObject.name}");
-                    }
-                    else
-                    {
-                        logger.LogInfo($"Still  entity: {i}/{scannedEntities.Count}. Speed: {entity.speed}. {entity.collider.gameObject}");
-                    }
-
-                    ++i;
-                }
+                return;
             }
+
+            InitLogger();
+            var lastScannedEntities = new List<ScannedEntity>(scannedEntities);
+            scannedEntities.Clear();
+
+            var playerPos = __instance.transform.position;
+
+            var colliders = new Collider[100];
+            Physics.OverlapSphereNonAlloc(playerPos, 75, colliders, layerMask: 8 | 524288); // Player | Enemies
+
+            foreach (var collider in colliders)
+            {
+                var entity = new ScannedEntity { collider = collider, position = collider.transform.position  };
+
+                foreach (var lastEntity in lastScannedEntities)
+                {
+                    if (lastEntity.collider == collider)
+                    {
+                        entity.speed = (collider.transform.position - lastEntity.position).magnitude;
+                    }
+                }
+
+                scannedEntities.Add(entity);
+            }
+
+            var i = 0;
+            /*(foreach(var entity in scannedEntities)
+            {
+                logger.LogInfo(entity.speed > 0.06
+                    ? $"Moving entity: {i}/{scannedEntities.Count}. Speed: {entity.speed}. {entity.collider.gameObject.name}"
+                    : $"Still  entity: {i}/{scannedEntities.Count}. Speed: {entity.speed}. {entity.collider.gameObject}");
+
+                ++i;
+            }*/
         }
     }
 }

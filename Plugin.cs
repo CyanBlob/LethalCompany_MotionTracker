@@ -1,6 +1,8 @@
 ﻿using BepInEx;
 using HarmonyLib;
 using LC_MotionTracker.Patches;
+using LC_API;
+using UnityEngine;
 
 namespace LC_MotionTracker
 {
@@ -8,6 +10,7 @@ namespace LC_MotionTracker
     public class Plugin : BaseUnityPlugin
     {
         private readonly Harmony harmony = new Harmony(PluginInfo.PLUGIN_GUID);
+        private GameObject MotionTrackerLED;
 
         private void Awake()
         {
@@ -15,6 +18,12 @@ namespace LC_MotionTracker
             Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
 
             harmony.PatchAll(typeof(MotionTracker));
+
+            LC_API.BundleAPI.BundleLoader.OnLoadedBundles += () => {
+                Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID}->OnLoadedAssets is called!");
+                MotionTrackerLED = LC_API.BundleAPI.BundleLoader.GetLoadedAsset<GameObject>("assets/motion tracker/prefabs/motiontrackerled.prefab");
+                Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID}->MotionTracker: {MotionTrackerLED}");
+            };
         }
     }
 }
