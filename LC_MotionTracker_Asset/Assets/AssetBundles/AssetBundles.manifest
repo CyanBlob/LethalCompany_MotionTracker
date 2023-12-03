@@ -1,7 +1,0 @@
-ManifestFileVersion: 0
-CRC: 2375689666
-AssetBundleManifest:
-  AssetBundleInfos:
-    Info_0:
-      Name: motiontrackerled
-      Dependencies: {}

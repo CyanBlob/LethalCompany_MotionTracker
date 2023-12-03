@@ -7,6 +7,7 @@ using static GameNetcodeStuff.PlayerControllerB;
 using GameNetcodeStuff;
 using Unity.Netcode;
 using Logger = BepInEx.Logging.Logger;
+using LethalLib.Modules;
 
 public struct ScannedEntity
 {
@@ -15,7 +16,7 @@ public struct ScannedEntity
     public float speed;
 }
 
-namespace LC_MotionTracker.Patches
+namespace MotionTracker.Patches
 {
     [HarmonyPatch(typeof(PlayerControllerB))]
     internal class MotionTracker
@@ -24,8 +25,10 @@ namespace LC_MotionTracker.Patches
 
         private static List<ScannedEntity> scannedEntities = new();
 
-        private static GameObject MotionTrackerLED;
-        private static GameObject SpawnedMotionTracker;
+        private static Item motionTrackerLED;
+        private static MotionTrackerScript spawnedMotionTracker;
+
+        private static LineDrawer _lineDrawer;
 
         private static void InitLogger()
         {
@@ -34,7 +37,11 @@ namespace LC_MotionTracker.Patches
                 return;
             }
 
-            MotionTrackerLED = LC_API.BundleAPI.BundleLoader.GetLoadedAsset<GameObject>("assets/motion tracker/prefabs/motiontrackerled.prefab");
+            _lineDrawer = new LineDrawer();
+
+            /*motionTrackerLED =
+                LC_API.BundleAPI.BundleLoader.GetLoadedAsset<MotionTrackerScript>(
+                    "assets/motion tracker/prefabs/motiontrackerled.prefab");*/
 
             logger = new ManualLogSource("LC_MotionTracker_Log");
             Logger.Sources.Add(logger);
@@ -44,19 +51,50 @@ namespace LC_MotionTracker.Patches
         [HarmonyPostfix]
         public static void PostJump(PlayerControllerB __instance)
         {
+            return;
             InitLogger();
             logger.LogInfo("Spawning motion tracker");
 
-            SpawnedMotionTracker = UnityEngine.Object.Instantiate(MotionTrackerLED);
-            SpawnedMotionTracker.transform.position = __instance.transform.position;
-            SpawnedMotionTracker.AddComponent<MotionTrackerScript>();
-            SpawnedMotionTracker.transform.localScale = new Vector3(100, 100, 100);
+            AssetBundle assetBundle = AssetBundle.LoadFromFile("motiontrackerled");
+
+            logger.LogInfo(assetBundle);
+
+            foreach (string name in assetBundle.GetAllAssetNames())
+            {
+                logger.LogInfo(name);
+            }
+
+            motionTrackerLED = assetBundle.LoadAsset<Item>("motiontrackerled");
+
+            spawnedMotionTracker = motionTrackerLED.spawnPrefab.AddComponent<MotionTrackerScript>();
+
+            spawnedMotionTracker.itemProperties = motionTrackerLED;
+
+            Items.RegisterShopItem(motionTrackerLED, 0);
+
+            //spawnedMotionTracker = Object.Instantiate(motionTrackerLED);
+            //spawnedMotionTracker.transform.position = __instance.transform.position + new Vector3(0, 2f, 0);
+            //spawnedMotionTracker.AddComponent<MotionTrackerScript>();
+            //spawnedMotionTracker.transform.localScale = new Vector3(10, 10, 10);
+            //SpawnedMotionTracker.transform.parent = __instance.transform;
         }
 
         [HarmonyPatch(typeof(PlayerControllerB), "Update")]
         [HarmonyPostfix]
-        public static void UpdateStaminaPostfix(PlayerControllerB __instance)
+        public static void Update(PlayerControllerB __instance)
         {
+            if (!((NetworkBehaviour)__instance).IsOwner || !__instance.isPlayerControlled)
+            {
+                return;
+            }
+
+            if (spawnedMotionTracker != null)
+            {
+                InitLogger();
+                _lineDrawer.DrawLineInGameView(__instance.transform.position, spawnedMotionTracker.transform.position,
+                    new Color(0, 1, 1));
+            }
+
             return;
             if (!((NetworkBehaviour)__instance).IsOwner || !__instance.isPlayerControlled)
             {
@@ -74,7 +112,7 @@ namespace LC_MotionTracker.Patches
 
             foreach (var collider in colliders)
             {
-                var entity = new ScannedEntity { collider = collider, position = collider.transform.position  };
+                var entity = new ScannedEntity { collider = collider, position = collider.transform.position };
 
                 foreach (var lastEntity in lastScannedEntities)
                 {
