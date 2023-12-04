@@ -96,7 +96,7 @@ namespace MotionTracker.Patches
             }
 
             return;
-            if (!((NetworkBehaviour)__instance).IsOwner || !__instance.isPlayerControlled)
+            /*if (!((NetworkBehaviour)__instance).IsOwner || !__instance.isPlayerControlled)
             {
                 return;
             }
@@ -112,11 +112,11 @@ namespace MotionTracker.Patches
 
             foreach (var collider in colliders)
             {
-                var entity = new ScannedEntity { collider = collider, position = collider.transform.position };
+                var entity = new ScannedEntity { obj = collider, position = collider.transform.position };
 
                 foreach (var lastEntity in lastScannedEntities)
                 {
-                    if (lastEntity.collider == collider)
+                    if (lastEntity.obj == collider)
                     {
                         entity.speed = (collider.transform.position - lastEntity.position).magnitude;
                     }
@@ -125,7 +125,7 @@ namespace MotionTracker.Patches
                 scannedEntities.Add(entity);
             }
 
-            var i = 0;
+            var i = 0;*/
             /*(foreach(var entity in scannedEntities)
             {
                 logger.LogInfo(entity.speed > 0.06

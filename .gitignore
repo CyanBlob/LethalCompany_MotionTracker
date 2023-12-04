@@ -70,4 +70,6 @@ crashlytics-build.properties
 
 .idea/
 bin/
-LC_MotionTracker_Asset/Library/PackageCache/*
+LC_MotionTracker_Assets/Library/PackageCache/*
+LC_MotionTracker_Assets_updated/Library/PackageCache/*
+LC_MotionTracker_Assets_updated/Assets/TextMesh Pro/*

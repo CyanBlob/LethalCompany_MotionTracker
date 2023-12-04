@@ -7,7 +7,16 @@ using Random = UnityEngine.Random;
 
 namespace MotionTracker.Patches;
 
-public class MotionTrackerScript : GrabbableObject
+public struct ScannedEntity
+{
+    public Collider obj;
+    public Vector3 position;
+    public Vector3 rawPosition;
+    public float speed;
+    public GameObject blip;
+}
+
+public class MotionTrackerScript : PhysicsProp
 {
     ParticleSystem particleSystem;
     AudioSource audioSource;
@@ -15,13 +24,24 @@ public class MotionTrackerScript : GrabbableObject
     public AudioClip shootSound;
     public AudioClip noammoSound;
 
-    public GameObject BulletTrail;
-
-    Transform BulletSpawnPoint;
-
-    public float spread = 7f, range = 35;
-
     RoundManager roundManager;
+
+    private GameObject baseRadar;
+    private RectTransform baseRadarRect;
+    private GameObject baseRadarOff;
+    private GameObject LED;
+    private GameObject blip;
+    private GameObject blipParent;
+
+    private float searchRadius = 50f;
+
+    private Hashtable scannedEntities = new();
+
+    private List<GameObject> blipPool = new List<GameObject>();
+
+    private int maxEntities = 50;
+
+    Collider[] colliders = new Collider[200];
 
     // Update is called once per frame
     public new void Start()
@@ -30,184 +50,182 @@ public class MotionTrackerScript : GrabbableObject
         //this.transform.SetParent(GameObject.Find("/Environment/Props").transform);
 
         Debug.Log($"Found GameObject: {GameObject.Find("/Environment/Props").transform}");
-
     }
+
     public void Awake()
     {
-        Debug.Log("MOTION TRACKER AWAKE");
-
         particleSystem = GetComponentInChildren<ParticleSystem>();
-        audioSource = GetComponent<AudioSource>();
+        audioSource = transform.gameObject.AddComponent<AudioSource>();
         roundManager = FindObjectOfType<RoundManager>();
 
-        BulletSpawnPoint = transform.GetChild(0);
 
         grabbable = true;
         grabbableToEnemies = true;
         mainObjectRenderer = GetComponent<MeshRenderer>();
         useCooldown = 1f;
-        insertedBattery = new Battery(false, 100);
+        insertedBattery = new Battery(false, 1);
 
-        //Fix Materials
+        baseRadar = transform.Find("Canvas/BaseRadar").gameObject;
+        baseRadarRect = baseRadar.GetComponent<RectTransform>();
 
+        baseRadarOff = transform.Find("Canvas/BaseRadar_off").gameObject;
+        LED = transform.Find("LED").gameObject;
+        blipParent = transform.Find("Canvas/BlipParent").gameObject;
+        blip = transform.Find("Canvas/BlipParent/Blip").gameObject;
+        blip.SetActive(false);
 
-        Debug.Log("MOTION TRACKER END AWAKE");
+        for (var i = 0; i < maxEntities; ++i)
+        {
+            var _blip = Instantiate(blip, baseRadar.transform);
+            _blip.transform.parent = blipParent.transform;
+            _blip.SetActive(false);
+            blipPool.Add(_blip);
+        }
+
+        Enable(false);
     }
 
-    private void OnDestroy()
+    private void Enable(bool enable, bool inHand = true)
     {
-        Debug.Log("MOTION TRACKER DESTROYED");
-        Debug.Log("MOTION TRACKER DESTROYED");
-        Debug.Log("MOTION TRACKER DESTROYED");
-        Debug.Log("MOTION TRACKER DESTROYED");
-        Debug.Log("MOTION TRACKER DESTROYED");
-        Debug.Log("MOTION TRACKER DESTROYED");
+        baseRadar.SetActive(enable);
+        LED.SetActive(enable);
+
+        if (inHand)
+        {
+            baseRadarOff.SetActive(!enable);
+        }
+        else
+        {
+            baseRadarOff.SetActive(false);
+        }
+
+        if (!enable)
+        {
+            foreach (var blip in blipPool)
+            {
+                blip.SetActive(false);
+            }
+        }
     }
 
     public override void ItemActivate(bool used, bool buttonDown = true)
     {
         base.ItemActivate(used, buttonDown);
 
-        if (insertedBattery.charge >= 0.16f)
+        Enable(used);
+
+        Debug.Log($"Motion tracker activate? : {used}");
+    }
+
+    public override void UseUpBatteries()
+    {
+        base.UseUpBatteries();
+        Enable(false, false);
+    }
+
+    public override void Update()
+    {
+        base.Update();
+
+        if (isPocketed)
         {
-            insertedBattery.charge -= 0.16f;
-            if (insertedBattery.charge < 0.16f) insertedBattery.charge = 0;
+            Enable(false, false);
+            return;
+        }
 
-            audioSource.PlayOneShot(shootSound);
-            particleSystem.Play();
-
-            for (int i = 0; i < 5; i++)
+        if (isBeingUsed)
+        {
+            if (isHeld)
             {
-                float rx = Random.Range(-spread - 3, spread + 3);
-                float ry = Random.Range(-spread, spread);
+                Enable(true);
+                blipParent.transform.localRotation = Quaternion.Euler(0, 0, playerHeldBy.transform.eulerAngles.y + 0);
+            }
+            else
+            {
+                Enable(false, false);
+            }
 
-                Vector3 targetPos = transform.position + transform.forward * range;
-                targetPos = new Vector3(targetPos.x + rx, targetPos.y + ry, targetPos.z + rx);
+            if (insertedBattery.empty)
+            {
+                Enable(false);
+                return;
+            }
 
-                Vector3 direction = targetPos - transform.position;
+            for (var j = 0; j < maxEntities; ++j)
+            {
+                blipPool[j].SetActive(false);
+            }
 
-                LineRenderer Trail = Instantiate(BulletTrail, BulletSpawnPoint).GetComponent<LineRenderer>();
+            var lastScannedEntities = new Hashtable(scannedEntities);
+            scannedEntities.Clear();
 
-                if (Physics.Raycast(transform.position, direction.normalized, out RaycastHit rayHit, range))
+            var playerPos = transform.position;
+
+            var colliderCount = Physics.OverlapSphereNonAlloc(playerPos, searchRadius, colliders,
+                layerMask: 8 | 524288); // Player | Enemies
+
+
+            var i = 0;
+            for (int c = 0; c < colliderCount; ++c)
+            {
+                var collider = colliders[c];
+                var entity = new ScannedEntity
+                    { obj = collider, position = collider.transform.position - baseRadar.transform.position, rawPosition = collider.transform.position};
+
+                if (lastScannedEntities.Contains(entity.obj.transform.GetHashCode()))
                 {
-                    SpawnTrail(Trail, rayHit.point);
-
-                    if (rayHit.collider.TryGetComponent(out IHittable hittable))
-                    {
-                        if (hittable == null) return;
-
-                        hittable.Hit(1, playerHeldBy.gameplayCamera.transform.forward, playerHeldBy);
-                    }
-                    else if (rayHit.collider.TryGetComponent(out EnemyAI enemy))
-                    {
-                        if (enemy == null) return;
-                        if (enemy.name.ToLower().Contains("ghost") || enemy.name.ToLower().Contains("spring")) return;
-                        if (!enemy.enemyType.canDie) return;
-
-                        if (enemy.enemyHP > 0)
-                        {
-                            enemy.enemyHP -= 1;
-
-                            if (enemy.enemyHP == 0)
-                            {
-                                switch (enemy.enemyType.enemyName)
-                                {
-                                    case "HoarderBug":
-                                        SpawnScrap(roundManager.currentLevel.spawnableScrap[2],
-                                            enemy.transform.position, 50);
-                                        break;
-                                    case "Centipede":
-                                        SpawnScrap(roundManager.currentLevel.spawnableScrap[2],
-                                            enemy.transform.position, 50);
-                                        break;
-                                    case "SandSpider":
-                                        SpawnScrap(roundManager.currentLevel.spawnableScrap[2],
-                                            enemy.transform.position, 100);
-                                        break;
-                                    case "MouthDog":
-                                        SpawnScrap(roundManager.currentLevel.spawnableScrap[2],
-                                            enemy.transform.position, 100);
-                                        break;
-                                    case "Flowerman":
-                                        SpawnScrap(roundManager.currentLevel.spawnableScrap[2],
-                                            enemy.transform.position, 200);
-                                        break;
-                                    case "Jester":
-                                        SpawnScrap(roundManager.currentLevel.spawnableScrap[2],
-                                            enemy.transform.position, 500);
-                                        break;
-                                    default:
-                                        SpawnScrap(roundManager.currentLevel.spawnableScrap[2],
-                                            enemy.transform.position, 100);
-                                        break;
-                                }
-                            }
-                        }
-                    }
+                    entity.speed = (collider.transform.position -
+                                    ((ScannedEntity)lastScannedEntities[entity.obj.transform.GetHashCode()]).rawPosition)
+                        .magnitude;
                 }
                 else
                 {
-                    SpawnTrail(Trail, transform.position + direction * 100);
+                    entity.speed = 0;
+                }
+
+                if (!scannedEntities.Contains(entity.obj.transform.GetHashCode()))
+                {
+                    entity.blip = blipPool[i];
+
+                    i += 1;
+
+                    var blipLocalPos = entity.blip.transform.localPosition;
+                    blipLocalPos = entity.position;
+
+                    entity.blip.transform.localPosition = new Vector3(
+                        Remap(blipLocalPos.x, -searchRadius, searchRadius, -45, 45),
+                        Remap(blipLocalPos.z, -searchRadius, searchRadius, -45, 45),
+                        -.1f);
+
+                    // only enable blips for moving objects
+                    if (entity.speed > .06) // faster than a crouch walk
+                    {
+                        entity.blip.SetActive(true);
+                    }
+                    else
+                    {
+                        entity.blip.SetActive(false);
+                    }
+
+                    scannedEntities.Add(entity.obj.transform.GetHashCode(), entity);
                 }
             }
 
-            StartCoroutine(ShakeCamera());
-        }
-        else
-        {
-            audioSource.PlayOneShot(noammoSound);
         }
     }
 
-    private void SpawnTrail(LineRenderer Trail, Vector3 HitPoint)
+    public float Remap(float from, float fromMin, float fromMax, float toMin, float toMax)
     {
-    }
+        var fromAbs = from - fromMin;
+        var fromMaxAbs = fromMax - fromMin;
 
-    public void SpawnScrap(SpawnableItemWithRarity scrapItem, Vector3 enemyPos, int customWorth = 0)
-    {
-        List<int> list = new List<int>();
-        List<NetworkObjectReference> list3 = new List<NetworkObjectReference>();
-        List<Item> ScrapToSpawn = new List<Item>();
+        var normal = fromAbs / fromMaxAbs;
 
-        GameObject gameObject = Instantiate(scrapItem.spawnableItem.spawnPrefab, enemyPos, new Quaternion(),
-            roundManager.spawnedScrapContainer);
-        GrabbableObject component = gameObject.GetComponent<GrabbableObject>();
-        component.transform.rotation = Quaternion.Euler(component.itemProperties.restingRotation);
-        component.fallTime = 0f;
-        ScrapToSpawn.Add(scrapItem.spawnableItem);
-        list.Add((int)(roundManager.AnomalyRandom.Next(ScrapToSpawn[0].minValue, ScrapToSpawn[0].maxValue) *
-                       roundManager.scrapValueMultiplier));
-        component.scrapValue = list[list.Count - 1];
-        NetworkObject component2 = gameObject.GetComponent<NetworkObject>();
-        component2.Spawn(false);
-        list3.Add(component2);
+        var toMaxAbs = toMax - toMin;
+        var toAbs = toMaxAbs * normal;
 
-        if (customWorth != 0)
-        {
-            component.SetScrapValue(customWorth);
-        }
+        var to = toAbs + toMin;
 
-        //StartCoroutine(roundManager.waitForScrapToSpawnToSync(list3.ToArray(), list.ToArray()));
-    }
-
-    IEnumerator ShakeCamera()
-    {
-        Vector3 originalPosition = playerHeldBy.gameplayCamera.transform.localPosition;
-
-        float elapsed = 0.0f;
-
-        while (elapsed < 0.4f)
-        {
-            float x = Random.Range(-1f, 1f) * 0.3f;
-            float y = Random.Range(-1f, 1f) * 0.3f;
-
-            playerHeldBy.gameplayCamera.transform.localPosition = new Vector3(x, y, originalPosition.z);
-
-            elapsed += Time.deltaTime;
-
-            yield return null;
-        }
-
-        playerHeldBy.gameplayCamera.transform.localPosition = originalPosition;
+        return to;
     }
 }
