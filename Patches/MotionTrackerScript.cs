@@ -18,16 +18,9 @@ public struct ScannedEntity
 
 public class MotionTrackerScript : PhysicsProp
 {
-    ParticleSystem particleSystem;
     AudioSource audioSource;
 
-    public AudioClip shootSound;
-    public AudioClip noammoSound;
-
-    RoundManager roundManager;
-
     private GameObject baseRadar;
-    private RectTransform baseRadarRect;
     private GameObject baseRadarOff;
     private GameObject LED;
     private GameObject blip;
@@ -43,20 +36,10 @@ public class MotionTrackerScript : PhysicsProp
 
     Collider[] colliders = new Collider[200];
 
-    // Update is called once per frame
-    public new void Start()
-    {
-        base.Start();
-        //this.transform.SetParent(GameObject.Find("/Environment/Props").transform);
-
-        Debug.Log($"Found GameObject: {GameObject.Find("/Environment/Props").transform}");
-    }
-
     public void Awake()
     {
-        particleSystem = GetComponentInChildren<ParticleSystem>();
         audioSource = transform.gameObject.AddComponent<AudioSource>();
-        roundManager = FindObjectOfType<RoundManager>();
+        audioSource.volume = .1f;
 
 
         grabbable = true;
@@ -66,7 +49,6 @@ public class MotionTrackerScript : PhysicsProp
         insertedBattery = new Battery(false, 1);
 
         baseRadar = transform.Find("Canvas/BaseRadar").gameObject;
-        baseRadarRect = baseRadar.GetComponent<RectTransform>();
 
         baseRadarOff = transform.Find("Canvas/BaseRadar_off").gameObject;
         LED = transform.Find("LED").gameObject;
@@ -74,15 +56,11 @@ public class MotionTrackerScript : PhysicsProp
         blip = transform.Find("Canvas/BlipParent/Blip").gameObject;
         blip.SetActive(false);
 
-        if (IsHost)
+        blipPool.Add(blip);
+        for (var i = 1; i < maxEntities; ++i)
         {
-            for (var i = 0; i < maxEntities; ++i)
-            {
-                var _blip = Instantiate(blip, baseRadar.transform);
-                _blip.transform.parent = blipParent.transform;
-                _blip.SetActive(false);
-                blipPool.Add(_blip);
-            }
+            blipPool.Add(transform.Find($"Canvas/BlipParent/Blip ({i})").gameObject);
+            blipPool[i].SetActive(false);
         }
 
         Enable(false);
@@ -173,12 +151,16 @@ public class MotionTrackerScript : PhysicsProp
             {
                 var collider = colliders[c];
                 var entity = new ScannedEntity
-                    { obj = collider, position = collider.transform.position - baseRadar.transform.position, rawPosition = collider.transform.position};
+                {
+                    obj = collider, position = collider.transform.position - baseRadar.transform.position,
+                    rawPosition = collider.transform.position
+                };
 
                 if (lastScannedEntities.Contains(entity.obj.transform.GetHashCode()))
                 {
                     entity.speed = (collider.transform.position -
-                                    ((ScannedEntity)lastScannedEntities[entity.obj.transform.GetHashCode()]).rawPosition)
+                                    ((ScannedEntity)lastScannedEntities[entity.obj.transform.GetHashCode()])
+                                    .rawPosition)
                         .magnitude;
                 }
                 else
@@ -213,7 +195,6 @@ public class MotionTrackerScript : PhysicsProp
                     scannedEntities.Add(entity.obj.transform.GetHashCode(), entity);
                 }
             }
-
         }
     }
 

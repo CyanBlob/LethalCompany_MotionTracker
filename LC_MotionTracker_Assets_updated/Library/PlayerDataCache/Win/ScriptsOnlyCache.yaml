@@ -31,6 +31,9 @@ ScriptsOnlyBuild:
     - UnityEngine.InputSystem.RemoteInputPlayerConnection
     Unity.Netcode.Editor.dll:
     - Unity.Netcode.Editor.Configuration.NetcodeForGameObjectsProjectSettings
+    - Unity.Netcode.Editor.NetworkObjectEditor
+    Unity.Netcode.Runtime.dll:
+    - Unity.Netcode.NetworkObject
     Unity.RenderPipelines.Core.Runtime.dll:
     - UnityEngine.Rendering.Volume
     - UnityEngine.Rendering.VolumeProfile
