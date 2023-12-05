@@ -5,7 +5,6 @@ ScriptsOnlyBuild:
     Unity.2D.Animation.Editor.dll:
     - UnityEditor.U2D.Animation.BoneGizmo
     Unity.2D.Animation.Runtime.dll:
-    - UnityEngine.U2D.Animation.BufferManager
     - UnityEngine.U2D.Animation.SpriteSkinComposite
     - UnityEngine.U2D.Animation.SpriteSkinUpdateHelper
     Unity.2D.IK.Editor.dll:
@@ -103,4 +102,4 @@ ScriptsOnlyBuild:
   platform: 5
   scenePathNames:
   - Assets/main.unity
-  playerPath: C:/Users/andre/Development/LC_MotionTracker/LC_MotionTracker_Assets/Assets/AssetBundles/modassets
+  playerPath: C:/Users/andre/Development/LC_MotionTracker/LC_MotionTracker_Assets_updated/Assets/AssetBundles/modassets

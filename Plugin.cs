@@ -53,7 +53,7 @@ namespace MotionTracker
             spawnedMotionTracker.itemProperties = motionTrackerLED_Item;
 
             Logger.LogInfo($"Registering: {motionTrackerLED_Item}");
-            Items.RegisterShopItem(motionTrackerLED_Item, 1);
+            Items.RegisterShopItem(motionTrackerLED_Item, 30);
             Logger.LogInfo($"Done registering: {motionTrackerLED_Item}");
 
             foreach (var item in Items.shopItems)

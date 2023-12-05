@@ -59,6 +59,8 @@
     </ItemGroup>
     <ItemGroup>
       <Compile Remove="LC_MotionTracker_Asset\**" />
+      <Compile Remove="LC_MotionTracker_Assets\**" />
+      <Compile Remove="LC_MotionTracker_Assets_updated\**" />
       <Compile Update="MotionTrackerResource.Designer.cs">
         <DesignTime>True</DesignTime>
         <AutoGen>True</AutoGen>
@@ -68,6 +70,8 @@
     </ItemGroup>
     <ItemGroup>
       <EmbeddedResource Remove="LC_MotionTracker_Asset\**" />
+      <EmbeddedResource Remove="LC_MotionTracker_Assets\**" />
+      <EmbeddedResource Remove="LC_MotionTracker_Assets_updated\**" />
       <EmbeddedResource Update="MotionTrackerResource.resx">
         <Generator>ResXFileCodeGenerator</Generator>
         <LastGenOutput>MotionTrackerResource.Designer.cs</LastGenOutput>
@@ -77,5 +81,6 @@
     <ItemGroup>
       <None Remove="LC_MotionTracker_Asset\**" />
       <None Remove="LC_MotionTracker_Assets\**" />
+      <None Remove="LC_MotionTracker_Assets_updated\**" />
     </ItemGroup>
 </Project>

@@ -74,12 +74,15 @@ public class MotionTrackerScript : PhysicsProp
         blip = transform.Find("Canvas/BlipParent/Blip").gameObject;
         blip.SetActive(false);
 
-        for (var i = 0; i < maxEntities; ++i)
+        if (IsHost)
         {
-            var _blip = Instantiate(blip, baseRadar.transform);
-            _blip.transform.parent = blipParent.transform;
-            _blip.SetActive(false);
-            blipPool.Add(_blip);
+            for (var i = 0; i < maxEntities; ++i)
+            {
+                var _blip = Instantiate(blip, baseRadar.transform);
+                _blip.transform.parent = blipParent.transform;
+                _blip.SetActive(false);
+                blipPool.Add(_blip);
+            }
         }
 
         Enable(false);

@@ -32,7 +32,7 @@ MonoBehaviour:
   spawnPrefab: {fileID: 1164530344143858, guid: 4f238dba05c25d64180b8ec2c9330d2e,
     type: 3}
   requiresBattery: 1
-  batteryUsage: 45
+  batteryUsage: 60
   automaticallySetUsingPower: 1
   itemIcon: {fileID: 21300000, guid: e25dde37d8372a64bb82f254ecb9787c, type: 3}
   grabAnim: 
