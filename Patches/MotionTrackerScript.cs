@@ -16,7 +16,7 @@ public struct ScannedEntity
     public GameObject blip;
 }
 
-public class MotionTrackerScript : PhysicsProp
+public class MotionTrackerScript : GrabbableObject
 {
     AudioSource audioSource;
 
@@ -183,14 +183,7 @@ public class MotionTrackerScript : PhysicsProp
                         -.1f);
 
                     // only enable blips for moving objects
-                    if (entity.speed > .06) // faster than a crouch walk
-                    {
-                        entity.blip.SetActive(true);
-                    }
-                    else
-                    {
-                        entity.blip.SetActive(false);
-                    }
+                    entity.blip.SetActive(entity.speed > .05); // faster than a crouch walk
 
                     scannedEntities.Add(entity.obj.transform.GetHashCode(), entity);
                 }

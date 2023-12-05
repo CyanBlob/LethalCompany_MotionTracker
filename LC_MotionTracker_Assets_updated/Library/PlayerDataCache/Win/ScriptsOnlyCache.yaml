@@ -1,7 +1,9 @@
 ScriptsOnlyBuild:
   usedScripts:
     Assembly-CSharp.dll:
+    - FlashlightItem
     - Item
+    - OccludeAudio
     Unity.2D.Animation.Editor.dll:
     - UnityEditor.U2D.Animation.BoneGizmo
     Unity.2D.Animation.Runtime.dll:
@@ -31,7 +33,6 @@ ScriptsOnlyBuild:
     - UnityEngine.InputSystem.RemoteInputPlayerConnection
     Unity.Netcode.Editor.dll:
     - Unity.Netcode.Editor.Configuration.NetcodeForGameObjectsProjectSettings
-    - Unity.Netcode.Editor.NetworkObjectEditor
     Unity.Netcode.Runtime.dll:
     - Unity.Netcode.NetworkObject
     Unity.RenderPipelines.Core.Runtime.dll:

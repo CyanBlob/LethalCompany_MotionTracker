@@ -23,10 +23,13 @@ namespace MotionTracker
                 assetBundle.LoadAsset<Item>("assets/MotionTrackerItem.asset");
 
 
-            /*motionTrackerLED_Item.spawnPrefab.AddComponent<NetworkObject>();
+            motionTrackerLED_Item.spawnPrefab.AddComponent<NetworkObject>();
             var netObj = motionTrackerLED_Item.spawnPrefab.GetComponent<NetworkObject>();
 
-            netObj.name = "MotionNetObj";
+            // This seems to be necessary to fix the error when dropping the item in multiplayer
+            netObj.AutoObjectParentSync = false;
+
+            /*netObj.name = "MotionNetObj";
             netObj.AutoObjectParentSync = true;
             netObj.SynchronizeTransform = true;
             netObj.SceneMigrationSynchronization = true;
@@ -35,6 +38,8 @@ namespace MotionTracker
             spawnedMotionTracker = motionTrackerLED_Item.spawnPrefab.AddComponent<MotionTrackerScript>();
 
             spawnedMotionTracker.itemProperties = motionTrackerLED_Item;
+
+            spawnedMotionTracker.isInFactory = true;
 
             Items.RegisterShopItem(motionTrackerLED_Item, 30);
 
