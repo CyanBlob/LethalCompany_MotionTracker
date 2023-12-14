@@ -37,10 +37,6 @@ public class MotionTrackerScript : GrabbableObject
 
     public void Awake()
     {
-        foreach (var obj in FindObjectsByType<AudioListener>(FindObjectsSortMode.None))
-        {
-            obj.enabled = false;
-        }
         grabbable = true;
         grabbableToEnemies = true;
         mainObjectRenderer = GetComponent<MeshRenderer>();
@@ -63,16 +59,6 @@ public class MotionTrackerScript : GrabbableObject
         }
 
         Enable(false);
-
-        foreach (var obj in FindObjectsByType<AudioListener>(FindObjectsSortMode.None))
-        {
-            Debug.Log(obj);
-            Debug.Log(obj.gameObject);
-            Debug.Log(obj.name);
-            Debug.Log(obj.isActiveAndEnabled);
-            obj.enabled = true;
-        }
-
     }
 
     private void Enable(bool enable, bool inHand = true)

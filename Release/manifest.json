@@ -1,6 +1,6 @@
 {
     "name": "Motion_Tracker",
-    "version_number": "0.1.4",
+    "version_number": "1.0.0",
     "website_url": "https://github.com/CyanBlob/LethalCompany_MotionTracker",
     "description": "A motion tracker similar to Alien: Isolation",
     "dependencies": [
