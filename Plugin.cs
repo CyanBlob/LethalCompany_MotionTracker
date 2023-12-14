@@ -1,9 +1,10 @@
-﻿using BepInEx;
+using BepInEx;
 using LethalLib.Modules;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using MotionTracker.Patches;
 using Unity.Netcode;
+using BepInEx.Configuration;
 
 namespace MotionTracker
 {
@@ -11,12 +12,19 @@ namespace MotionTracker
     public class Plugin : BaseUnityPlugin
     {
         private GameObject MotionTrackerLED;
-
         private static Item motionTrackerLED_Item;
         private static MotionTrackerScript spawnedMotionTracker;
-
+        public static ConfigEntry<float> BatteryDuration;
+        public static ConfigEntry<int> MotionTrackerCost;
+        public static ConfigEntry<float> MotionTrackerSpeedDetect;
+        public static ConfigEntry<float> MotionTrackerRange;
         private void Awake()
         {
+            BatteryDuration = Config.Bind<float>("General", "BatteryDuration", 100f, "Motion Tracker's battery life");
+            MotionTrackerCost = Config.Bind<int>("General", "MotionTrackerCost", 30, "Motion Tracker's cost");
+            MotionTrackerSpeedDetect = Config.Bind<float>("General", "MotionTrackerSpeedDetect", 0.05f, "Minimum speed at which entities can be detected by the Motion Tracker (0.05 is faster than a crouch walk)");
+            MotionTrackerRange = Config.Bind<float>("General", "MotionTrackerRange", 50f, "Motion Tracker's range of action");
+
             AssetBundle assetBundle = AssetBundle.LoadFromMemory(MotionTrackerResource.motiontrackerled);
 
             motionTrackerLED_Item =
@@ -34,7 +42,7 @@ namespace MotionTracker
 
             spawnedMotionTracker.isInFactory = true;
 
-            Items.RegisterShopItem(motionTrackerLED_Item, 30);
+            Items.RegisterShopItem(motionTrackerLED_Item, MotionTrackerCost.Value);
 
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(motionTrackerLED_Item.spawnPrefab);
 
