@@ -4,20 +4,23 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using MotionTracker.Patches;
 using Unity.Netcode;
-using BepInEx.Configuration;
+using HarmonyLib;
 
 namespace MotionTracker
 {
-    [BepInPlugin("com.cyanblob.motiontracker", "motiontracker", "1.0.0")]
+    [BepInPlugin("com.cyanblob.motiontracker", "motiontracker", "2.0.0")]
     public class Plugin : BaseUnityPlugin
     {
-        private GameObject MotionTrackerLED;
+        private Harmony HarmonyVar;
         private static Item motionTrackerLED_Item;
         private static MotionTrackerScript spawnedMotionTracker;
 
         private void Awake()
         {
             MotionTrackerConfig.LoadConfig(Config);
+
+            HarmonyVar = Harmony.CreateAndPatchAll(typeof(MotionTrackerScript));
+            HarmonyVar.PatchAll(typeof(MotionTrackerConfig));
 
             AssetBundle assetBundle = AssetBundle.LoadFromMemory(MotionTrackerResource.motiontrackerled);
 
