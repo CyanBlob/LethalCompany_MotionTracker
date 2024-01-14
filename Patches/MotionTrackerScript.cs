@@ -25,7 +25,7 @@ public class MotionTrackerScript : GrabbableObject
     private GameObject blip;
     private GameObject blipParent;
 
-    private float searchRadius = 50f;
+    private float searchRadius = MotionTrackerConfig.MotionTrackerRange;
 
     private Hashtable scannedEntities = new();
 
@@ -42,9 +42,8 @@ public class MotionTrackerScript : GrabbableObject
         mainObjectRenderer = GetComponent<MeshRenderer>();
         useCooldown = 1f;
         insertedBattery = new Battery(false, 1);
-
+        itemProperties.batteryUsage = MotionTrackerConfig.MotionTrackerBatteryDuration;
         baseRadar = transform.Find("Canvas/BaseRadar").gameObject;
-
         baseRadarOff = transform.Find("Canvas/BaseRadar_off").gameObject;
         LED = transform.Find("LED").gameObject;
         blipParent = transform.Find("Canvas/BlipParent").gameObject;
@@ -178,7 +177,7 @@ public class MotionTrackerScript : GrabbableObject
                         -.1f);
 
                     // only enable blips for moving objects
-                    entity.blip.SetActive(entity.speed > .05); // faster than a crouch walk
+                    entity.blip.SetActive(entity.speed > MotionTrackerConfig.MotionTrackerSpeedDetect);
 
                     scannedEntities.Add(entity.obj.transform.GetHashCode(), entity);
                 }
