@@ -1,2 +1,2 @@
 # MotionTracker
-Add the MotionTracker from the game "Alien: Isolation"
+Adds a Motion Tracker similar to the one in "Alien: Isolation"
