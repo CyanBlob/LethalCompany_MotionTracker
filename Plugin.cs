@@ -14,6 +14,7 @@ namespace MotionTracker
         private GameObject MotionTrackerLED;
         private static Item motionTrackerLED_Item;
         private static MotionTrackerScript spawnedMotionTracker;
+
         private void Awake()
         {
             MotionTrackerConfig.LoadConfig(Config);
