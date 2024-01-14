@@ -1,9 +1,10 @@
-﻿using BepInEx;
+using BepInEx;
 using LethalLib.Modules;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using MotionTracker.Patches;
 using Unity.Netcode;
+using BepInEx.Configuration;
 
 namespace MotionTracker
 {
@@ -11,12 +12,12 @@ namespace MotionTracker
     public class Plugin : BaseUnityPlugin
     {
         private GameObject MotionTrackerLED;
-
         private static Item motionTrackerLED_Item;
         private static MotionTrackerScript spawnedMotionTracker;
-
         private void Awake()
         {
+            MotionTrackerConfig.LoadConfig(Config);
+
             AssetBundle assetBundle = AssetBundle.LoadFromMemory(MotionTrackerResource.motiontrackerled);
 
             motionTrackerLED_Item =
@@ -34,7 +35,7 @@ namespace MotionTracker
 
             spawnedMotionTracker.isInFactory = true;
 
-            Items.RegisterShopItem(motionTrackerLED_Item, 30);
+            Items.RegisterShopItem(motionTrackerLED_Item, MotionTrackerConfig.MotionTrackerCost);
 
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(motionTrackerLED_Item.spawnPrefab);
 
