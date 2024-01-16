@@ -17,7 +17,8 @@ public class MotionTrackerConfig
     public static float MotionTrackerSpeedDetect = 0.05f;
     public static float MotionTrackerRange = 50f;
 
-    private static void SetValues(int Cost, float BatteryDuration, float SpeedDetect, float Range) {
+    private static void SetValues(int Cost, float BatteryDuration, float SpeedDetect, float Range)
+    {
         MotionTrackerCost = Cost;
         MotionTrackerBatteryDuration = BatteryDuration;
         MotionTrackerSpeedDetect = SpeedDetect;
@@ -25,7 +26,8 @@ public class MotionTrackerConfig
     }
     private static void SetToLocalValues() => SetValues(MotionTrackerCostLocal, MotionTrackerBatteryDurationLocal, MotionTrackerSpeedDetectLocal, MotionTrackerRangeLocal);
 
-    public static void LoadConfig(ConfigFile config) {
+    public static void LoadConfig(ConfigFile config)
+    {
         Debug.Log(config);
 
         MotionTrackerCostLocal = Math.Clamp(config.Bind("General", "MotionTrackerCost", 30, "Motion Tracker's cost").Value, 0, 9999);
@@ -36,7 +38,8 @@ public class MotionTrackerConfig
         SetToLocalValues();
     }
 
-    public static byte[] GetSettings() {
+    public static byte[] GetSettings()
+    {
         byte[] data = new byte[17];
         data[0] = 1;
         Array.Copy(BitConverter.GetBytes(MotionTrackerCostLocal), 0, data, 1, 4);
@@ -46,18 +49,22 @@ public class MotionTrackerConfig
         return data;
     }
 
-    public static void SetSettings(byte[] data) {
-        switch (data[0]) {
-            case 1: {
-                MotionTrackerCost = BitConverter.ToInt32(data, 1);
-                MotionTrackerBatteryDuration = BitConverter.ToSingle(data, 5);
-                MotionTrackerSpeedDetect = BitConverter.ToSingle(data, 9);
-                MotionTrackerRange = BitConverter.ToSingle(data, 13);
-                break;
-            }
-            default: {
-                throw new Exception("Invalid version byte");
-            }
+    public static void SetSettings(byte[] data)
+    {
+        switch (data[0])
+        {
+            case 1:
+                {
+                    MotionTrackerCost = BitConverter.ToInt32(data, 1);
+                    MotionTrackerBatteryDuration = BitConverter.ToSingle(data, 5);
+                    MotionTrackerSpeedDetect = BitConverter.ToSingle(data, 9);
+                    MotionTrackerRange = BitConverter.ToSingle(data, 13);
+                    break;
+                }
+            default:
+                {
+                    throw new Exception("Invalid version byte");
+                }
         }
     }
 
@@ -65,32 +72,39 @@ public class MotionTrackerConfig
 
     private static bool IsHost() => NetworkManager.Singleton.IsHost;
 
-    public static void OnRequestSync(ulong clientID, FastBufferReader reader) {
+    public static void OnRequestSync(ulong clientID, FastBufferReader reader)
+    {
         if (!IsHost()) return;
 
         Debug.Log("MotionTrackerLog: Sending config to client " + clientID);
         byte[] data = GetSettings();
         FastBufferWriter dataOut = new(data.Length, Unity.Collections.Allocator.Temp, data.Length);
-        try {
+        try
+        {
             dataOut.WriteBytes(data);
             NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage("MotionTracker_OnReceiveConfigSync", clientID, dataOut, NetworkDelivery.Reliable);
         }
-        catch (Exception e) {
+        catch (Exception e)
+        {
             Debug.LogError("MotionTrackerLog: Failed to send config: " + e);
         }
-        finally {
+        finally
+        {
             dataOut.Dispose();
         }
     }
 
-    public static void OnReceiveSync(ulong clientID, FastBufferReader reader) {
+    public static void OnReceiveSync(ulong clientID, FastBufferReader reader)
+    {
         Debug.Log("MotionTrackerLog: Received config from host");
         byte[] data = new byte[16];
-        try {
+        try
+        {
             reader.ReadBytes(ref data, 16);
             SetSettings(data);
         }
-        catch (Exception e) {
+        catch (Exception e)
+        {
             Debug.LogError("MotionTrackerLog: Failed to receive config: " + e);
             SetToLocalValues();
         }
@@ -98,13 +112,16 @@ public class MotionTrackerConfig
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(PlayerControllerB), "ConnectClientToPlayerObject")]
-    static void ServerConnect() {
-        if (IsHost()) {
+    static void ServerConnect()
+    {
+        if (IsHost())
+        {
             Debug.Log("MotionTrackerLog: Started hosting, using local settings");
             SetToLocalValues();
             NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler("MotionTracker_OnRequestConfigSync", OnRequestSync);
         }
-        else {
+        else
+        {
             Debug.Log("MotionTrackerLog: Connected to server, requesting settings");
             NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler("MotionTracker_OnReceiveConfigSync", OnReceiveSync);
             FastBufferWriter blankOut = new();
@@ -114,7 +131,8 @@ public class MotionTrackerConfig
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(GameNetworkManager), "StartDisconnect")]
-    static void ServerDisconnect() {
+    static void ServerDisconnect()
+    {
         Debug.Log("MotionTrackerLog: Server disconnect");
         SetToLocalValues();
     }
