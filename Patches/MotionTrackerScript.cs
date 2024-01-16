@@ -142,7 +142,8 @@ public class MotionTrackerScript : GrabbableObject
                 var collider = colliders[c];
                 var entity = new ScannedEntity
                 {
-                    obj = collider, position = collider.transform.position - baseRadar.transform.position,
+                    obj = collider,
+                    position = collider.transform.position - baseRadar.transform.position,
                     rawPosition = collider.transform.position
                 };
 
