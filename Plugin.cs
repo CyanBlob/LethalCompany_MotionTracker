@@ -11,20 +11,18 @@ namespace MotionTracker
     [BepInPlugin("com.cyanblob.motiontracker", "motiontracker", "2.0.0")]
     public class Plugin : BaseUnityPlugin
     {
+        private Harmony harmony;
         private static Item motionTrackerLED_Item;
         private static MotionTrackerScript spawnedMotionTracker;
 
         private void Awake()
         {
             MotionTrackerConfig.LoadConfig(Config);
-
             harmony.PatchAll(typeof(MotionTrackerConfig));
 
             AssetBundle assetBundle = AssetBundle.LoadFromMemory(MotionTrackerResource.motiontrackerled);
 
-            motionTrackerLED_Item =
-                assetBundle.LoadAsset<Item>("assets/MotionTrackerItem.asset");
-
+            motionTrackerLED_Item = assetBundle.LoadAsset<Item>("assets/MotionTrackerItem.asset");
 
             var netObj = motionTrackerLED_Item.spawnPrefab.GetComponent<NetworkObject>();
 
