@@ -3,7 +3,7 @@ Can be bought in the terminal to track movement near the player
 
 **Version 1.1.0**
 - Update for game v49
--Added configuration options (they should be synchronized with those of the host).
+- Added configuration options (they should be synchronized with those of the host).
 
 **Version 1.0.0**
 - Fix bug causing audio to follow the Motion Tracker instead of players
@@ -16,7 +16,7 @@ Can be bought in the terminal to track movement near the player
 - Potentially fix audio bug causing audio to be heard from object's perspective instead of player's
 
 **Version 0.1.3**
- - Fix bug causing players to enter a glitched state when dropping the Motion Tracker in multiplayer
+- Fix bug causing players to enter a glitched state when dropping the Motion Tracker in multiplayer
  
 **Version 0.1.2**
 - Increased duration to 60 seconds (up from 45)
