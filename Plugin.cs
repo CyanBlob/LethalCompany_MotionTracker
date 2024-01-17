@@ -8,7 +8,7 @@ using HarmonyLib;
 
 namespace MotionTracker
 {
-    [BepInPlugin("com.cyanblob.motiontracker", "motiontracker", "2.0.0")]
+    [BepInPlugin("com.cyanblob.motiontracker", "motiontracker", "1.1.0")]
     public class Plugin : BaseUnityPlugin
     {
         private static Item motionTrackerLED_Item;
